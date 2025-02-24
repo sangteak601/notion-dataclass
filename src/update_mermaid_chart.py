@@ -1,6 +1,33 @@
 from notion_client import Client
 
 
+def get_nested_children(notion_client : Client, block_id : str):
+    """
+    Get all nested children of a block.
+
+    Args:
+        notion_client (Client): Notion client object
+        block_id (str): Block ID to get children from
+
+    Returns:
+        list: List of all nested children
+    """
+    # Get children of the block
+    children = notion_client.blocks.children.list(
+        **{
+            'block_id': block_id,
+        }
+    )
+
+    # Get nested children of the block
+    all_children = []
+    all_children += children['results']
+    for result in children['results']:
+        if result['has_children']:
+            all_children += get_nested_children(notion_client, result['id'])
+
+    return all_children
+
 def update_mermaid_pie_chart(
     notion_client : Client,
     page_id : str,
@@ -19,7 +46,7 @@ def update_mermaid_pie_chart(
         db_id (str): Database ID to get data from
         db_filter (dict): Database filter to apply
         db_property_category (str): Database property name to use for categories in the chart. Must be a select property.
-        db_property_value (str): Database property name to use for values in the chart. Must be a number property.
+        db_property_value (str): Database property name to use for values in the chart. Must be a number or a formula property.
     """
     # Get database info
     db_info = notion_client.databases.retrieve(
@@ -44,18 +71,23 @@ def update_mermaid_pie_chart(
 
     # Put data into chart_data
     for result in db_data['results']:
-        chart_data[result['properties'][db_property_category]['select']['name']] += result['properties'][db_property_value]['number']
+        if result['properties'][db_property_value]['type'] == 'number':
+            chart_data[result['properties'][db_property_category]['select']['name']] += result['properties'][db_property_value]['number']
+        elif result['properties'][db_property_value]['type'] == 'formula':
+            chart_data[result['properties'][db_property_category]['select']['name']] += result['properties'][db_property_value]['formula']['number']
+        else:
+            raise Exception(f'Property {db_property_value} must be a number or formula property. Property type is {result["properties"][db_property_value]["type"]}')
+
+    # Round values to 2 decimal places
+    for category in chart_data:
+        chart_data[category] = round(chart_data[category], 2)
 
     # Get children of the page
-    page_children = notion_client.blocks.children.list(
-        **{
-            'block_id': page_id,
-        }
-    )
+    page_children = get_nested_children(notion_client, page_id)
 
     # Get the block ID of the chart using the title
     chart_block_id = None
-    for result in page_children['results']:
+    for result in page_children:
         if result['type'] == 'code':
             if chart_title in result['code']['rich_text'][0]['text']['content']:
                 chart_block_id = result['id']
