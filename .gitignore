@@ -1,0 +1,7 @@
+# vscode
+.vscode/
+.devcontainer/
+
+# Python cache
+__pycache__/
+*.pyc

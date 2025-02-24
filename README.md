@@ -1,1 +1,1 @@
-# notion-dataclass
+# notion_automation

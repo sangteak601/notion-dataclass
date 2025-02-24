@@ -1,0 +1,17 @@
+services:
+  notion-automation:
+    build: .
+    image: notion-automation-image
+    container_name: notion-automation
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - NOTION_TOKEN=notion_token # Replace with your Notion token
+      - NOTION_EXPENSE_CHART_PAGE_ID=notion_page_id # Replace with your Notion page id
+      - NOTION_EXPENSE_CHART_DATA_DB_ID=notion_database_id # Replace with your Notion database id
+      - NOTION_EXPENSE_CHART_DB_PROPERTY_CATEGORY=Category # Replace with your Notion database property name
+      - NOTION_EXPENSE_CHART_DB_PROPERTY_VALUE=Value # Replace with your Notion database property name
+      - NOTION_EXPENSE_CHART_DB_PROPERTY_DATE=Date # Replace with your Notion database property name
+    volumes:
+      - ../src:/app
+    command: python3 /app/main.py
