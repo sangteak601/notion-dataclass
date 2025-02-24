@@ -98,7 +98,7 @@ def update_mermaid_pie_chart(
         raise Exception(f'Chart with title {chart_title} not found on page')
 
     # Update the chart
-    mermaid_script = f'pie showData title {chart_title}\n'
+    mermaid_script = "%%{init: {'theme':'default'}}%%\n" + f'pie showData title {chart_title}\n'
     tab = ' ' * 4
     for category, value in chart_data.items():
         mermaid_script += f'{tab}"{category}": {value}\n'
